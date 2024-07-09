@@ -175,3 +175,43 @@ export const updatePermission = async (permissionData) => {
     throw error
   }
 };
+
+export const getOrganizations = async () => {
+  try {
+    const response = await api.get('/organization');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching organizations:', error);
+    throw error;
+  }
+};
+
+export const createOrganization = async (organization) => {
+  try {
+    const response = await api.post('/organization', organization);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating organization:', error);
+    throw error;
+  }
+};
+
+export const updateOrganizationLimit = async (id, data) => {
+  try {
+    const response = await api.put(`/organization/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating organization limit:', error);
+    throw error;
+  }
+};
+
+export const deleteOrganization = async (id) => {
+  try {
+    const response = await api.delete(`/organization/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting organization:', error);
+    throw error;
+  }
+};

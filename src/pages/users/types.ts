@@ -10,3 +10,9 @@ export type User = {
 }
 
 export type UserRole = 'superadmin' | 'admin' | 'member' | 'user'
+
+export type Organization = {
+  id: string;
+  name: string;
+  limit: number;
+};

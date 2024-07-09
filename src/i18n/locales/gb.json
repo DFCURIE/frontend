@@ -13,8 +13,8 @@
     "reset_password": "Reset password"
   },
   "404": {
-    "title": "This page’s gone fishing.",
-    "text": "If you feel that it’s not right, please send us a message at ",
+    "title": "This page's gone fishing.",
+    "text": "If you feel that it's not right, please send us a message at ",
     "back_button": "Back to dashboard"
   },
   "typography": {
@@ -54,7 +54,8 @@
     "404": "404",
     "faq": "FAQ",
     "users": "Users",
-    "projects": "Projects"
+    "projects": "Projects",
+    "organizations": "Organizations"
   },
   "messages": {
     "all": "See all messages",
@@ -84,6 +85,25 @@
     "projects": "Projects",
     "account": "Account",
     "explore": "Explore"
+  },
+  "organizations": {
+    "name": "Name",
+    "limit": "Limit",
+    "actions": "Actions",
+    "add": "Add Organization",
+    "edit": "Edit Organization",
+    "delete": "Delete Organization",
+    "cancel": "Cancel",
+    "nameRequired": "Name is required",
+    "limitPositive": "Limit must be a positive number",
+    "updateSuccess": "Organization updated successfully",
+    "addSuccess": "Organization added successfully",
+    "deleteSuccess": "Organization deleted successfully",
+    "saveError": "Error saving organization",
+    "deleteError": "Error deleting organization",
+    "fetchError": "Error fetching organizations",
+    "deleteConfirmTitle": "Confirm Deletion",
+    "deleteConfirmMessage": "Are you sure you want to delete {name}?"
   },
   "treeView": {
     "basic": "Basic",
