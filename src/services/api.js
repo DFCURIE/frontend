@@ -215,3 +215,13 @@ export const deleteOrganization = async (id) => {
     throw error;
   }
 };
+
+export const getDashboardData = async () => {
+  try {
+    const response = await api.get('/main_dashboard');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    throw error;
+  }
+};
