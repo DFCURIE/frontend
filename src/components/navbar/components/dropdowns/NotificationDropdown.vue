@@ -3,7 +3,7 @@
     <template #anchor>
       <VaButton preset="secondary" color="textPrimary">
         <VaBadge overlap>
-          <template #text> 2+</template>
+          <template #text>{{ unreadCount }}</template>
           <VaIconNotification class="notification-dropdown__icon" />
         </VaBadge>
       </VaButton>
@@ -11,24 +11,31 @@
     <VaDropdownContent class="h-full sm:max-w-[420px] sm:h-auto">
       <section class="sm:max-h-[320px] p-4 overflow-auto">
         <VaList class="space-y-1 mb-2">
-          <template v-for="(item, index) in notificationsWithRelativeTime" :key="item.id">
+          <template v-if="notificationsWithRelativeTime.length > 0">
+            <template v-for="(item, index) in notificationsWithRelativeTime" :key="item.id">
+              <VaListItem class="text-base" @click="handleMarkAsRead(item.id)">
+                <VaListItemSection icon class="mx-0 p-0">
+                  <VaIcon :name="item.icon" :color="item.read ? 'secondary' : 'primary'" />
+                </VaListItemSection>
+                <VaListItemSection :class="{ 'font-bold': !item.read }">
+                  {{ item.message }}
+                </VaListItemSection>
+                <VaListItemSection icon class="mx-1">
+                  {{ item.updateTimestamp }}
+                </VaListItemSection>
+              </VaListItem>
+              <VaListSeparator v-if="item.separator && index !== notificationsWithRelativeTime.length - 1" class="mx-3" />
+            </template>
+          </template>
+          <template v-else>
             <VaListItem class="text-base">
-              <VaListItemSection icon class="mx-0 p-0">
-                <VaIcon :name="item.icon" color="secondary" />
-              </VaListItemSection>
-              <VaListItemSection>
-                {{ item.message }}
-              </VaListItemSection>
-              <VaListItemSection icon class="mx-1">
-                {{ item.updateTimestamp }}
-              </VaListItemSection>
+              No notifications available.
             </VaListItem>
-            <VaListSeparator v-if="item.separator && index !== notificationsWithRelativeTime.length - 1" class="mx-3" />
           </template>
         </VaList>
 
-        <VaButton preset="primary" class="w-full" @click="displayAllNotifications = !displayAllNotifications"
-          >{{ displayAllNotifications ? t('notifications.less') : t('notifications.all') }}
+        <VaButton preset="primary" class="w-full" @click="loadMoreNotifications">
+          {{ displayAllNotifications ? t('notifications.less') : t('notifications.all') }}
         </VaButton>
       </section>
     </VaDropdownContent>
@@ -36,87 +43,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import VaIconNotification from '../../../icons/VaIconNotification.vue'
+import { getNotifications, markNotificationAsRead } from '../../../../services/api'
 
 const { t, locale } = useI18n()
 
 const baseNumberOfVisibleNotifications = 4
 const rtf = new Intl.RelativeTimeFormat(locale.value, { style: 'short' })
 const displayAllNotifications = ref(false)
+const notifications = ref([])
+const unreadCount = ref(0)
 
 interface INotification {
+  id: string
   message: string
   icon: string
-  id: number
+  read: boolean
   separator?: boolean
   updateTimestamp: Date
 }
-
-const makeDateFromNow = (timeFromNow: number) => {
-  const date = new Date()
-  date.setTime(date.getTime() + timeFromNow)
-  return date
-}
-
-const notifications: INotification[] = [
-  {
-    message: '4 pending requests',
-    icon: 'favorite_outline',
-    id: 1,
-    separator: true,
-    updateTimestamp: makeDateFromNow(-3 * 60 * 1000),
-  },
-  {
-    message: '3 new reports',
-    icon: 'calendar_today',
-    id: 2,
-    separator: true,
-    updateTimestamp: makeDateFromNow(-12 * 60 * 60 * 1000),
-  },
-  {
-    message: 'Whoops! Your trial period has expired.',
-    icon: 'error_outline',
-    id: 3,
-    separator: true,
-    updateTimestamp: makeDateFromNow(-2 * 24 * 60 * 60 * 1000),
-  },
-  {
-    message: 'It looks like your timezone is set incorrectly, please change it to avoid issues with Memory.',
-    icon: 'schedule',
-    id: 4,
-    updateTimestamp: makeDateFromNow(-2 * 7 * 24 * 60 * 60 * 1000),
-  },
-  {
-    message: '2 new team members added',
-    icon: 'group_add',
-    id: 5,
-    separator: false,
-    updateTimestamp: makeDateFromNow(-3 * 60 * 1000),
-  },
-  {
-    message: 'Monthly budget exceeded by 10%',
-    icon: 'trending_up',
-    id: 6,
-    separator: true,
-    updateTimestamp: makeDateFromNow(-3 * 24 * 60 * 60 * 1000),
-  },
-  {
-    message: '7 tasks are approaching their deadlines',
-    icon: 'alarm',
-    id: 7,
-    separator: false,
-    updateTimestamp: makeDateFromNow(-5 * 60 * 60 * 1000),
-  },
-  {
-    message: 'New software update available',
-    icon: 'system_update',
-    id: 8,
-    separator: true,
-    updateTimestamp: makeDateFromNow(-1 * 24 * 60 * 60 * 1000),
-  },
-].sort((a, b) => new Date(b.updateTimestamp).getTime() - new Date(a.updateTimestamp).getTime())
 
 const TIME_NAMES = {
   second: 1000,
@@ -136,7 +83,11 @@ const getTimeName = (differenceTime: number) => {
 }
 
 const notificationsWithRelativeTime = computed(() => {
-  const list = displayAllNotifications.value ? notifications : notifications.slice(0, baseNumberOfVisibleNotifications)
+  if (!notifications.value || notifications.value.length === 0) {
+    return []
+  }
+
+  const list = displayAllNotifications.value ? notifications.value : notifications.value.slice(0, baseNumberOfVisibleNotifications)
 
   return list.map((item, index) => {
     const timeDifference = Math.round(new Date().getTime() - new Date(item.updateTimestamp).getTime())
@@ -161,6 +112,36 @@ const notificationsWithRelativeTime = computed(() => {
     }
   })
 })
+
+const fetchNotifications = async () => {
+  try {
+    const response = await getNotifications()
+    if (response && response.data) {
+      notifications.value = response.data
+      unreadCount.value = notifications.value.filter(n => !n.read).length
+    } else {
+      notifications.value = []
+      unreadCount.value = 0
+    }
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error)
+  }
+}
+
+const handleMarkAsRead = async (notificationId: string) => {
+  try {
+    await markNotificationAsRead(notificationId)
+    await fetchNotifications()  // Refresh notifications after marking as read
+  } catch (error) {
+    console.error('Failed to mark notification as read:', error)
+  }
+}
+
+const loadMoreNotifications = () => {
+  displayAllNotifications.value = !displayAllNotifications.value
+}
+
+onMounted(fetchNotifications)
 </script>
 
 <style lang="scss" scoped>
